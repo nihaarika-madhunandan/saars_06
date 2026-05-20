@@ -10,6 +10,20 @@ from email.mime.multipart import MIMEMultipart
 import json
 
 app = Flask(__name__)
+from pymongo import MongoClient
+
+uri = "mongodb+srv://bangaru:aryabangaru123@cluster0.qxfxb6u.mongodb.net/?retryWrites=true&w=majority"
+
+client = MongoClient(uri)
+
+try:
+    client.admin.command('ping')
+    print("MongoDB connected successfully ✅")
+except Exception as e:
+    print("MongoDB connection error ❌", e)
+
+db = client["sarrs"]
+collection = db["reports"]
 
 # ==================== CONFIGURATION ====================
 app.config["UPLOAD_FOLDER"] = "static/uploads"
