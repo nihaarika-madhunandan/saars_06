@@ -15,16 +15,14 @@ from pymongo import MongoClient
 uri = "mongodb+srv://bangaru:aryabangaru123@cluster0.qxfxb6u.mongodb.net/?retryWrites=true&w=majority"
 
 client = MongoClient(uri)
-
-try:
-    client.admin.command('ping')
-    print("MongoDB connected successfully ✅")
-except Exception as e:
-    print("MongoDB connection error ❌", e)
-
 db = client["sarrs"]
 collection = db["reports"]
 
+try:
+    print("Databases:", client.list_database_names())
+    print("✅ LOGIN SUCCESS")
+except Exception as e:
+    print("❌ LOGIN FAILED:", e)
 # ==================== CONFIGURATION ====================
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
@@ -40,12 +38,38 @@ app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD", "your_password")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 # ==================== DATABASE & AUTH SETUP ====================
-from models import db
+#from models import db
 from models.user import User, Rescuer, Admin
 from models.report import Report
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
+@app.route("/submit", methods=["POST"])
+def submit():
+    data = {
+    "animal_type": request.form.get("animal_type"),
+    "condition": request.form.get("condition"),
+    "location": request.form.get("location")
+}
+    collection.insert_one(data)
+    return jsonify({"message": "Data saved"})
+@app.route("/data", methods=["GET"])
+def get_data():
+    data = list(collection.find())
+
+    for item in data:
+        item["_id"] = str(item["_id"])
+    return jsonify(data)
+@app.route("/update_status/<report_id>", methods=["POST"])
+def update_status(report_id):
+    from bson.objectid import ObjectId
+
+    collection.update_one(
+        {"_id": ObjectId(report_id)},
+        {"$set": {"status": "Rescued"}}
+    )
+
+    return redirect("/user/dashboard")
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 
@@ -360,31 +384,35 @@ def update_rescue_status(report_id):
         flash("You can only update your claimed animals", "error")
         return redirect(url_for("rescuer_dashboard"))
     
-    is_rescued = request.form.get("is_rescued") == "true"
+    new_status = request.form.get("status", report.status)
+    old_status = report.status
     
-    if is_rescued and not report.is_rescued:
-        report.mark_rescued()
-        current_user.update_rescue_count()
+    # Update the status
+    if report.update_status(new_status):
+        # Send email to reporter only when status is changed to Rescued
+        if new_status == "Rescued" and old_status != "Rescued":
+            current_user.update_rescue_count()
+            email_body = f"""
+            <h2>Great News! 🎉</h2>
+            <p>Dear {report.reporter_name},</p>
+            <p>We have wonderful news! The animal you reported has been successfully rescued!</p>
+            <p><strong>Animal Details:</strong></p>
+            <ul>
+                <li>Type: {report.animal_type}</li>
+                <li>Condition: {report.condition}</li>
+                <li>Location: {report.location}</li>
+            </ul>
+            <p><strong>Rescued By:</strong> {current_user.full_name}</p>
+            <p><strong>Rescuer Contact:</strong> {current_user.phone}</p>
+            <p>Thank you for your immediate reporting and assistance in saving this precious life! 🐾</p>
+            <p>Best regards,<br>ResQPaws Team</p>
+            """
+            send_email(report.reporter_email, "Animal Rescued Successfully! 🎉", email_body)
         
-        # Send email to reporter
-        email_body = f"""
-        <h2>Great News! 🎉</h2>
-        <p>Dear {report.reporter_name},</p>
-        <p>We have wonderful news! The animal you reported has been successfully rescued!</p>
-        <p><strong>Animal Details:</strong></p>
-        <ul>
-            <li>Type: {report.animal_type}</li>
-            <li>Condition: {report.condition}</li>
-            <li>Location: {report.location}</li>
-        </ul>
-        <p><strong>Rescued By:</strong> {current_user.full_name}</p>
-        <p><strong>Rescuer Contact:</strong> {current_user.phone}</p>
-        <p>Thank you for your immediate reporting and assistance in saving this precious life! 🐾</p>
-        <p>Best regards,<br>ResQPaws Team</p>
-        """
-        send_email(report.reporter_email, "Animal Rescued Successfully! 🎉", email_body)
+        flash("Status updated successfully!", "success")
+    else:
+        flash("Invalid status", "error")
     
-    flash("Status updated successfully!", "success")
     return redirect(url_for("rescuer_dashboard"))
 
 @app.route("/rescuer/unclaim/<report_id>", methods=["POST"])

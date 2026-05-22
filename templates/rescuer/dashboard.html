@@ -728,80 +728,90 @@
                 </div>
             </div>
 
-            <!-- ========== MY RESCUES ========== -->
+            <!-- ========== MY OPERATIONS ========== -->
             <div id="claimed-tab" style="display: none;">
-                <div id="claimed-list">
-                    {% if claimed_reports %}
-                        {% for report in claimed_reports %}
-                        <div class="animal-card">
-                            <div class="animal-card-header">
-                                <div>
-                                    {% if report.image_path %}
-                                        <img src="{{ url_for('static', filename=report.image_path) }}" alt="Animal" class="animal-image">
+                {% if claimed_reports|length > 0 %}
+                    {% for report in claimed_reports %}
+                    <div class="animal-card">
+                        <div class="animal-card-header">
+                            <!-- Image Column -->
+                            <div>
+                                {% if report.image_path %}
+                                    <img src="{{ url_for('static', filename=report.image_path) }}" alt="Animal" class="animal-image">
+                                {% else %}
+                                    <div class="animal-image-placeholder">
+                                        {% if 'dog' in report.animal_type.lower() %}🐕{% elif 'cat' in report.animal_type.lower() %}🐱{% elif 'bird' in report.animal_type.lower() %}🦅{% else %}🐾{% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Info Column -->
+                            <div class="animal-info">
+                                <div class="animal-title-row">
+                                    <div class="animal-type">{{ report.animal_type }}</div>
+                                    {% if report.status == 'Rescued' %}
+                                        <span class="priority-badge" style="background: #dcfce7; color: #166534;">✅ Rescued</span>
+                                    {% elif report.status == 'In Progress' %}
+                                        <span class="priority-badge" style="background: #fef3c7; color: #7c2d12;">🚀 In Progress</span>
                                     {% else %}
-                                        <div class="animal-image-placeholder">
-                                            {% if 'dog' in report.animal_type.lower() %}🐕{% elif 'cat' in report.animal_type.lower() %}🐱{% elif 'bird' in report.animal_type.lower() %}🦅{% else %}🐾{% endif %}
-                                        </div>
+                                        <span class="priority-badge" style="background: #e0e7ff; color: #4c1d95;">⏳ Pending</span>
                                     {% endif %}
                                 </div>
 
-                                <div class="animal-info">
-                                    <div class="animal-title-row">
-                                        <div class="animal-type">{{ report.animal_type }}</div>
-                                        {% if report.is_rescued %}
-                                            <span class="priority-badge" style="background: #dcfce7; color: #166534;">✅ Rescued</span>
-                                        {% else %}
-                                            <span class="priority-badge" style="background: #fef3c7; color: #7c2d12;">🚀 In Progress</span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="info-label">📍 Location:</span>
-                                        <span class="info-value">{{ report.location }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="info-label">🏥 Condition:</span>
-                                        <span class="info-value">{{ report.condition }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="info-label">👤 Reporter:</span>
-                                        <span class="info-value">{{ report.reporter_name }} ({{ report.reporter_contact }})</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="info-label">🕐 Claimed:</span>
-                                        <span class="info-value">{{ report.claimed_at.strftime('%b %d, %Y %H:%M') if report.claimed_at else 'N/A' }}</span>
-                                    </div>
-
-                                    <form method="POST" action="/rescuer/update-status/{{ report.id }}" style="margin-top: 12px;">
-                                        <label class="checkbox-label">
-                                            <input type="checkbox" name="is_rescued" value="true" {% if report.is_rescued %}checked{% endif %} onchange="this.form.submit()">
-                                            <span>✅ Mark as Rescued</span>
-                                        </label>
-                                    </form>
+                                <div class="info-item">
+                                    <span class="info-label">📍 Location:</span>
+                                    <span class="info-value">{{ report.location }}</span>
                                 </div>
 
-                                <div class="action-buttons">
-                                    {% if report.latitude and report.longitude %}
-                                    <a href="https://maps.google.com/?q={{ report.latitude }},{{ report.longitude }}" target="_blank" class="btn-small btn-outline">
-                                        📍 Map
-                                    </a>
-                                    {% endif %}
-                                    <form method="POST" action="/rescuer/unclaim/{{ report.id }}" style="width: 100%;">
-                                        <button type="submit" class="btn-small btn-danger">
-                                            ❌ Release
-                                        </button>
-                                    </form>
+                                <div class="info-item">
+                                    <span class="info-label">🏥 Condition:</span>
+                                    <span class="info-value">{{ report.condition }}</span>
                                 </div>
+
+                                <div class="info-item">
+                                    <span class="info-label">👤 Reporter:</span>
+                                    <span class="info-value">{{ report.reporter_name }} ({{ report.reporter_contact }})</span>
+                                </div>
+
+                                <div class="info-item">
+                                    <span class="info-label">🕐 Claimed:</span>
+                                    <span class="info-value">{{ report.claimed_at.strftime('%b %d, %Y %H:%M') if report.claimed_at else 'N/A' }}</span>
+                                </div>
+
+                                <!-- Status Change Form -->
+                                <form method="POST" action="/rescuer/update-status/{{ report.id }}" style="margin-top: 16px; display: flex; align-items: center; gap: 10px;">
+                                    <label style="font-size: 13px; font-weight: 600; color: #475569; white-space: nowrap;">📊 Change Status:</label>
+                                    <select name="status" onchange="if(confirm('Update status?')) this.form.submit()" style="padding: 8px 12px; border: 2px solid #660ba2; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; background: white; color: #660ba2;">
+                                        <option value="Pending" {% if report.status == 'Pending' %}selected{% endif %}>⏳ Pending</option>
+                                        <option value="In Progress" {% if report.status == 'In Progress' %}selected{% endif %}>🚀 In Progress</option>
+                                        <option value="Rescued" {% if report.status == 'Rescued' %}selected{% endif %}>✅ Rescued</option>
+                                    </select>
+                                </form>
+                            </div>
+
+                            <!-- Action Buttons Column -->
+                            <div class="action-buttons">
+                                {% if report.latitude and report.longitude %}
+                                <a href="https://maps.google.com/?q={{ report.latitude }},{{ report.longitude }}" target="_blank" class="btn-small btn-outline" style="border-color: #660ba2; color: #660ba2;">
+                                    📍 Map
+                                </a>
+                                {% endif %}
+                                <form method="POST" action="/rescuer/unclaim/{{ report.id }}" style="width: 100%;">
+                                    <button type="submit" class="btn-small btn-danger" onclick="return confirm('Release this rescue?')">
+                                        ❌ Release
+                                    </button>
+                                </form>
                             </div>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📭</div>
-                            <h3>No Active Rescues</h3>
-                            <p>You haven't claimed any rescues yet. Switch to "Awaiting Rescue" to start helping!</p>
-                        </div>
-                    {% endif %}
-                </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>No Active Rescues</h3>
+                        <p>You haven't claimed any rescues yet. Switch to "Awaiting Rescue" to start helping!</p>
+                    </div>
+                {% endif %}
             </div>
         </main>
     </div>

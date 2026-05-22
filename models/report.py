@@ -222,6 +222,42 @@ class Report:
             }}
         )
     
+    def update_status(self, new_status):
+        """Update the status of the report"""
+        if db is None:
+            return
+        
+        valid_statuses = ["Pending", "In Progress", "Rescued"]
+        if new_status not in valid_statuses:
+            return False
+        
+        self.status = new_status
+        self.updated_at = datetime.utcnow()
+        
+        # Update is_rescued field based on status
+        if new_status == "Rescued":
+            self.is_rescued = True
+            self.completed_at = datetime.utcnow()
+            update_data = {
+                "status": new_status,
+                "is_rescued": True,
+                "completed_at": self.completed_at,
+                "updated_at": self.updated_at
+            }
+        else:
+            self.is_rescued = False
+            update_data = {
+                "status": new_status,
+                "is_rescued": False,
+                "updated_at": self.updated_at
+            }
+        
+        db.reports.update_one(
+            {"_id": ObjectId(self.id)},
+            {"$set": update_data}
+        )
+        return True
+    
     def __repr__(self):
         return f"<Report {self.id}: {self.animal_type}>"
 

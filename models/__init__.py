@@ -5,10 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # MongoDB connection
-MONGODB_URI = os.getenv(
-    "MONGODB_URI",
-    "mongodb+srv://username:password@cluster.mongodb.net/sarrs?retryWrites=true&w=majority&tlsInsecure=true"
-)
+MONGODB_URI = "mongodb+srv://bangaru:aryabangaru123@cluster0.qxfxb6u.mongodb.net/sarrs?retryWrites=true&w=majority"
 
 try:
     # Connect to MongoDB Atlas

@@ -47,14 +47,23 @@
                     <div class="report-card-header">
                         <div class="report-card-title">{{ report.animal_type }}</div>
                         <div>
-                            {% if report.status == "Pending" %}
-                                <span class="badge badge-pending">⏳ Pending</span>
-                            {% elif report.status == "In Progress" %}
-                                <span class="badge badge-progress">🚀 In Progress</span>
-                            {% else %}
-                                <span class="badge badge-rescued">✅ Rescued</span>
-                            {% endif %}
-                        </div>
+    {% if report.status == "Pending" %}
+        <span class="badge badge-pending">Pending</span>
+
+        <!-- ✅ BUTTON HERE -->
+        <form method="POST" action="/update_status/{{ report._id }}">
+            <button type="submit" style="margin-top:5px; padding:5px 10px;">
+                Mark as Rescued
+            </button>
+        </form>
+
+    {% elif report.status == "In Progress" %}
+        <span class="badge badge-progress">In Progress</span>
+
+    {% else %}
+        <span class="badge badge-rescued">Rescued</span>
+    {% endif %}
+</div>
                     </div>
 
                     <div class="report-card-meta">
@@ -62,7 +71,7 @@
                             <strong>Condition:</strong> {{ report.condition }}
                         </div>
                         <div class="report-card-meta-item">
-                            <strong>Report ID:</strong> #{{ report.id }}
+                            <strong>Report ID:</strong> #{{ report._id }}
                         </div>
                     </div>
 
@@ -80,6 +89,7 @@
                             </a>
                         {% endif %}
                     </div>
+                    
 
                     <div style="color: #999; font-size: 12px;">
                         🕐 Reported: {{ report.created_at.strftime('%B %d, %Y at %H:%M') }}
