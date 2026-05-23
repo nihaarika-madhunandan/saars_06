@@ -549,7 +549,7 @@
             </div>
             <div class="navbar-actions">
                 <span style="color: white; font-weight: 600;">🚑 {{ current_user.full_name }}</span>
-                <a href="{{ url_for('logout') }}" class="btn-small btn-outline" style="border-color: white; color: white;">Logout</a>
+                <a href="{{ url_for('logout') }}" class="btn-small btn-outline" style="background: white; color: #1f2937; border-color: #1f2937;">Logout</a>
             </div>
         </div>
     </header>
@@ -861,6 +861,14 @@
                     modal.style.display = 'none';
                 }
             });
+        });
+
+        // Auto-switch to MY OPERATIONS tab based on URL query param
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') === 'claimed') {
+                switchTab('claimed');
+            }
         });
     </script>
 </body>

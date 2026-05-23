@@ -98,11 +98,11 @@ class Report:
     
     @staticmethod
     def find_pending():
-        """Find all pending reports"""
+        """Find all truly unclaimed pending reports (no rescuer assigned yet)"""
         if db is None:
             return []
         reports = []
-        for report_data in db.reports.find({"is_rescued": False}).sort("created_at", -1):
+        for report_data in db.reports.find({"rescuer_id": None, "is_rescued": False}).sort("created_at", -1):
             reports.append(Report._from_dict(report_data))
         return reports
     

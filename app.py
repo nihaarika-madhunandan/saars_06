@@ -2,12 +2,16 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, f
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from datetime import datetime
 import os
+from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from functools import wraps
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import json
+
+# Load environment variables from .env BEFORE reading any config
+load_dotenv()
 
 app = Flask(__name__)
 from pymongo import MongoClient
@@ -17,12 +21,6 @@ uri = "mongodb+srv://bangaru:aryabangaru123@cluster0.qxfxb6u.mongodb.net/?retryW
 client = MongoClient(uri)
 db = client["sarrs"]
 collection = db["reports"]
-
-try:
-    print("Databases:", client.list_database_names())
-    print("✅ LOGIN SUCCESS")
-except Exception as e:
-    print("❌ LOGIN FAILED:", e)
 # ==================== CONFIGURATION ====================
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
@@ -205,8 +203,11 @@ def signup():
         email = request.form.get("email")
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
-        full_name = request.form.get("full_name")
+        full_name = request.form.get("full_name", "").strip()
         phone = request.form.get("phone", "")
+        
+        # Capitalize first letter of full_name
+        full_name = full_name.title() if full_name else full_name
         
         # Validation
         if not email or not password or not full_name:
@@ -221,13 +222,7 @@ def signup():
             flash("Password must be at least 8 characters long", "error")
             return redirect(url_for("signup"))
         
-        if not any(char.isupper() for char in password):
-            flash("Password must contain at least one uppercase letter (A-Z)", "error")
-            return redirect(url_for("signup"))
-        
-        if not any(char.isdigit() for char in password):
-            flash("Password must contain at least one number (0-9)", "error")
-            return redirect(url_for("signup"))
+
         
         # Check if user already exists
         if User.find_by_email(email):
@@ -287,11 +282,11 @@ def rescuer_signup():
         email = request.form.get("email")
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
-        full_name = request.form.get("full_name")
+        full_name = request.form.get("full_name", "").strip().title()
         phone = request.form.get("phone", "")
-        location = request.form.get("location", "")
-        experience = request.form.get("experience", "")
-        qualifications = request.form.get("qualifications", "")
+        location = request.form.get("location", "").strip().title()
+        experience = request.form.get("experience", "").strip().capitalize()
+        qualifications = request.form.get("qualifications", "").strip().title()
         
         # Validation
         if not email or not password or not full_name or not location or not experience:
@@ -306,13 +301,7 @@ def rescuer_signup():
             flash("Password must be at least 8 characters long", "error")
             return redirect(url_for("rescuer_signup"))
         
-        if not any(char.isupper() for char in password):
-            flash("Password must contain at least one uppercase letter (A-Z)", "error")
-            return redirect(url_for("rescuer_signup"))
-        
-        if not any(char.isdigit() for char in password):
-            flash("Password must contain at least one number (0-9)", "error")
-            return redirect(url_for("rescuer_signup"))
+
         
         # Check if user already exists
         if User.find_by_email(email):
@@ -529,7 +518,7 @@ def claim_rescue(report_id):
     send_email(report.reporter_email, "Rescuer Claimed Your Report! 🚀", email_body)
     
     flash("Animal claimed successfully! Reporter has been notified.", "success")
-    return redirect(url_for("rescuer_dashboard"))
+    return redirect(url_for("rescuer_dashboard") + "?tab=claimed")
 
 @app.route("/rescuer/update-status/<report_id>", methods=["POST"])
 @login_required
