@@ -174,6 +174,22 @@ def login():
         
         if user and user.check_password(password):
             login_user(user, remember=True)
+            
+            # Send login confirmation email
+            email_body = f"""
+            <h2>Login Confirmation 🔐</h2>
+            <p>Dear {user.full_name},</p>
+            <p>You have successfully logged in to your ResQPaws account.</p>
+            <p><strong>Login Details:</strong></p>
+            <ul>
+                <li>Email: {email}</li>
+                <li>Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</li>
+            </ul>
+            <p>If this wasn't you, please change your password immediately.</p>
+            <p>Best regards,<br>ResQPaws Team</p>
+            """
+            send_email(email, "Login Confirmation - ResQPaws 🐾", email_body)
+            
             next_page = request.args.get("next")
             if next_page:
                 return redirect(next_page)
@@ -234,13 +250,129 @@ def signup():
                 full_name=full_name,
                 phone=phone
             )
-            flash("Account created successfully! Please log in.", "success")
+            
+            # Send welcome email
+            email_body = f"""
+            <h2>Welcome to ResQPaws! 🎉</h2>
+            <p>Dear {full_name},</p>
+            <p>Thank you for creating your account with ResQPaws. Your account has been successfully activated!</p>
+            <p><strong>Account Details:</strong></p>
+            <ul>
+                <li>Email: {email}</li>
+                <li>Name: {full_name}</li>
+            </ul>
+            <p>You can now:</p>
+            <ul>
+                <li>✅ Report injured or stray animals</li>
+                <li>📍 Track your reports in real-time</li>
+                <li>📧 Get updates when rescuers claim your cases</li>
+            </ul>
+            <p><a href="http://resqpaws.com/login" style="background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Login Now</a></p>
+            <p>If you didn't create this account, please ignore this email.</p>
+            <p>Best regards,<br>ResQPaws Team</p>
+            """
+            send_email(email, "Welcome to ResQPaws - Account Created! 🐾", email_body)
+            
+            flash("Account created successfully! Please check your email for confirmation. You can now log in.", "success")
             return redirect(url_for("login"))
         except Exception as e:
             flash(f"Error creating account: {str(e)}", "error")
             return redirect(url_for("signup"))
     
     return render_template("signup.html")
+
+@app.route("/rescuer/signup", methods=["GET", "POST"])
+def rescuer_signup():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        full_name = request.form.get("full_name")
+        phone = request.form.get("phone", "")
+        location = request.form.get("location", "")
+        experience = request.form.get("experience", "")
+        qualifications = request.form.get("qualifications", "")
+        
+        # Validation
+        if not email or not password or not full_name or not location or not experience:
+            flash("Please fill in all required fields", "error")
+            return redirect(url_for("rescuer_signup"))
+        
+        if password != confirm_password:
+            flash("Passwords do not match", "error")
+            return redirect(url_for("rescuer_signup"))
+        
+        if len(password) < 8:
+            flash("Password must be at least 8 characters long", "error")
+            return redirect(url_for("rescuer_signup"))
+        
+        if not any(char.isupper() for char in password):
+            flash("Password must contain at least one uppercase letter (A-Z)", "error")
+            return redirect(url_for("rescuer_signup"))
+        
+        if not any(char.isdigit() for char in password):
+            flash("Password must contain at least one number (0-9)", "error")
+            return redirect(url_for("rescuer_signup"))
+        
+        # Check if user already exists
+        if User.find_by_email(email):
+            flash("Email already registered as a user", "error")
+            return redirect(url_for("rescuer_signup"))
+        
+        if Rescuer.find_by_email(email):
+            flash("Email already registered as a rescuer", "error")
+            return redirect(url_for("rescuer_signup"))
+        
+        if Admin.find_by_email(email):
+            flash("Email already registered as an admin", "error")
+            return redirect(url_for("rescuer_signup"))
+        
+        # Create new rescuer
+        try:
+            rescuer = Rescuer.create(
+                email=email,
+                password=password,
+                full_name=full_name,
+                phone=phone,
+                experience=experience,
+                location=location
+            )
+            
+            # Send welcome email
+            email_body = f"""
+            <h2>Welcome to ResQPaws Rescuer Community! 🐾</h2>
+            <p>Dear {full_name},</p>
+            <p>Thank you for joining ResQPaws as a rescuer! Your account has been successfully created and is now active.</p>
+            <p><strong>Account Details:</strong></p>
+            <ul>
+                <li>Email: {email}</li>
+                <li>Name: {full_name}</li>
+                <li>Service Location: {location}</li>
+            </ul>
+            <p><strong>What you can do now:</strong></p>
+            <ul>
+                <li>✅ View all pending animal rescue cases in your area</li>
+                <li>📍 Claim rescues that match your expertise</li>
+                <li>📊 Track your rescue progress and impact</li>
+                <li>🏆 Build your rescue profile and rating</li>
+                <li>📧 Get notified about new cases</li>
+            </ul>
+            <p><strong>Your Profile:</strong></p>
+            <p>Experience: {experience}</p>
+            <p>Qualifications: {qualifications if qualifications else 'None listed yet'}</p>
+            <p><a href="http://resqpaws.com/login" style="background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Login to Dashboard</a></p>
+            <p>Thank you for your commitment to helping animals in need!</p>
+            <p>Best regards,<br>ResQPaws Team</p>
+            """
+            send_email(email, "Welcome to ResQPaws Rescuer Portal! 🚀", email_body)
+            
+            flash("Rescuer account created successfully! Please check your email for confirmation. You can now log in to see rescue cases.", "success")
+            return redirect(url_for("login"))
+        except Exception as e:
+            flash(f"Error creating rescuer account: {str(e)}", "error")
+            return redirect(url_for("rescuer_signup"))
+    
+    return render_template("rescuer_signup.html")
 
 @app.route("/logout")
 @login_required
@@ -339,7 +471,9 @@ def rescuer_dashboard():
     if priority_filter:
         pending_reports = [r for r in pending_reports if r.priority == priority_filter]
     
-    claimed_reports = Report.find_by_rescuer(current_user._id)
+    # Get claimed reports - convert rescuer_id to string for proper matching
+    rescuer_id = str(current_user._id)
+    claimed_reports = Report.find_by_rescuer(rescuer_id)
     
     stats = {
         "pending": len(pending_reports),
@@ -366,8 +500,35 @@ def claim_rescue(report_id):
         flash("This animal has already been claimed", "error")
         return redirect(url_for("rescuer_dashboard"))
     
-    report.claim(current_user._id, current_user.full_name, current_user.phone, current_user.email)
-    flash("Animal claimed successfully!", "success")
+    # Convert rescuer_id to string to ensure proper storage
+    rescuer_id = str(current_user._id)
+    report.claim(rescuer_id, current_user.full_name, current_user.phone, current_user.email)
+    
+    # Verify the claim was saved
+    updated_report = Report.find_by_id(report_id)
+    if not updated_report or updated_report.rescuer_id is None:
+        flash("Error claiming report. Please try again.", "error")
+        return redirect(url_for("rescuer_dashboard"))
+    
+    # Send notification email to reporter that a rescuer has claimed their report
+    email_body = f"""
+    <h2>Good News! 📢</h2>
+    <p>Dear {report.reporter_name},</p>
+    <p>A rescuer has claimed your animal rescue report!</p>
+    <p><strong>Animal Details:</strong></p>
+    <ul>
+        <li>Type: {report.animal_type}</li>
+        <li>Condition: {report.condition}</li>
+        <li>Location: {report.location}</li>
+    </ul>
+    <p><strong>Assigned Rescuer:</strong> {current_user.full_name}</p>
+    <p><strong>Contact Number:</strong> {current_user.phone}</p>
+    <p>The rescuer will work on rescuing the animal as soon as possible. You will be notified once the animal is rescued!</p>
+    <p>Best regards,<br>ResQPaws Team</p>
+    """
+    send_email(report.reporter_email, "Rescuer Claimed Your Report! 🚀", email_body)
+    
+    flash("Animal claimed successfully! Reporter has been notified.", "success")
     return redirect(url_for("rescuer_dashboard"))
 
 @app.route("/rescuer/update-status/<report_id>", methods=["POST"])
@@ -380,7 +541,7 @@ def update_rescue_status(report_id):
         flash("Report not found", "error")
         return redirect(url_for("rescuer_dashboard"))
     
-    if report.rescuer_id != current_user._id:
+    if str(report.rescuer_id) != str(current_user._id):
         flash("You can only update your claimed animals", "error")
         return redirect(url_for("rescuer_dashboard"))
     
@@ -425,7 +586,7 @@ def unclaim_rescue(report_id):
         flash("Report not found", "error")
         return redirect(url_for("rescuer_dashboard"))
     
-    if report.rescuer_id != current_user._id:
+    if str(report.rescuer_id) != str(current_user._id):
         flash("You can only unclaim your claimed animals", "error")
         return redirect(url_for("rescuer_dashboard"))
     

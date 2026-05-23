@@ -146,7 +146,31 @@
 
                 <div class="form-group">
                     <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" placeholder="+1 (555) 123-4567">
+                    <div style="display: flex; gap: 8px;">
+                        <select id="country_code" name="country_code" style="width: 120px; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; transition: all 0.3s; cursor: pointer;">
+                            <option value="+91">🇮🇳 +91 (India)</option>
+                            <option value="+1">🇺🇸 +1 (USA)</option>
+                            <option value="+44">🇬🇧 +44 (UK)</option>
+                            <option value="+81">🇯🇵 +81 (Japan)</option>
+                            <option value="+86">🇨🇳 +86 (China)</option>
+                            <option value="+61">🇦🇺 +61 (Australia)</option>
+                            <option value="+33">🇫🇷 +33 (France)</option>
+                            <option value="+49">🇩🇪 +49 (Germany)</option>
+                            <option value="+39">🇮🇹 +39 (Italy)</option>
+                            <option value="+34">🇪🇸 +34 (Spain)</option>
+                            <option value="+55">🇧🇷 +55 (Brazil)</option>
+                            <option value="+7">🇷🇺 +7 (Russia)</option>
+                            <option value="+82">🇰🇷 +82 (South Korea)</option>
+                            <option value="+65">🇸🇬 +65 (Singapore)</option>
+                            <option value="+60">🇲🇾 +60 (Malaysia)</option>
+                            <option value="+62">🇮🇩 +62 (Indonesia)</option>
+                            <option value="+63">🇵🇭 +63 (Philippines)</option>
+                            <option value="+66">🇹🇭 +66 (Thailand)</option>
+                            <option value="+84">🇻🇳 +84 (Vietnam)</option>
+                            <option value="+92">🇵🇰 +92 (Pakistan)</option>
+                        </select>
+                        <input type="tel" id="phone" name="phone" placeholder="10-digit number" style="flex: 1;">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -194,6 +218,22 @@
                 icon.classList.add('fa-eye');
             }
         }
+
+        // Handle phone number formatting
+        document.getElementById('phone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 15) {
+                value = value.slice(0, 15);
+            }
+            e.target.value = value;
+        });
+
+        // Add country code to phone before submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const countryCode = document.getElementById('country_code').value;
+            const phoneInput = document.getElementById('phone');
+            phoneInput.value = countryCode + phoneInput.value;
+        });
     </script>
 </body>
 </html>

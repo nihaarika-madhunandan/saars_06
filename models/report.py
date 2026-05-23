@@ -111,6 +111,8 @@ class Report:
         """Find all reports claimed by a rescuer"""
         if db is None:
             return []
+        # Ensure rescuer_id is a string for proper matching
+        rescuer_id = str(rescuer_id)
         reports = []
         for report_data in db.reports.find({"rescuer_id": rescuer_id}).sort("claimed_at", -1):
             reports.append(Report._from_dict(report_data))
@@ -160,6 +162,8 @@ class Report:
         """Claim this report"""
         if db is None:
             return
+        # Ensure rescuer_id is a string
+        rescuer_id = str(rescuer_id)
         self.rescuer_id = rescuer_id
         self.rescuer_name = rescuer_name
         self.rescuer_contact = rescuer_contact

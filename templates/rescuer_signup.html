@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join as Rescuer - ResQPaws</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/antd-style.css') }}">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-box {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 50px;
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .auth-header h1 {
+            font-size: 32px;
+            color: #1f2937;
+            margin: 20px 0;
+        }
+        .auth-logo {
+            font-size: 48px;
+            color: #667eea;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .form-group input::placeholder {
+            color: #9ca3af;
+        }
+        .password-group {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .btn-block {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .auth-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .alert-error {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+        .alert-success {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            color: #1e40af;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <h1>Become a Rescuer</h1>
+                <p style="color: #6b7280; margin: 0;">Join our community and save lives</p>
+            </div>
+
+            <div class="info-box">
+                <strong>✅ What you'll get:</strong>
+                Access to live animal rescue cases • Track your rescues • Build your rescue profile • Help animals in your area
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" autocomplete="off">
+                <!-- Personal Information -->
+                <div class="section-title">📋 Personal Information</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="full_name">Full Name *</label>
+                        <input type="text" id="full_name" name="full_name" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="country_code" name="country_code" style="width: 120px; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; transition: all 0.3s; cursor: pointer;">
+                                <option value="+91">🇮🇳 +91 (India)</option>
+                                <option value="+1">🇺🇸 +1 (USA)</option>
+                                <option value="+44">🇬🇧 +44 (UK)</option>
+                                <option value="+81">🇯🇵 +81 (Japan)</option>
+                                <option value="+86">🇨🇳 +86 (China)</option>
+                                <option value="+61">🇦🇺 +61 (Australia)</option>
+                                <option value="+33">🇫🇷 +33 (France)</option>
+                                <option value="+49">🇩🇪 +49 (Germany)</option>
+                                <option value="+39">🇮🇹 +39 (Italy)</option>
+                                <option value="+34">🇪🇸 +34 (Spain)</option>
+                                <option value="+55">🇧🇷 +55 (Brazil)</option>
+                                <option value="+7">🇷🇺 +7 (Russia)</option>
+                                <option value="+82">🇰🇷 +82 (South Korea)</option>
+                                <option value="+65">🇸🇬 +65 (Singapore)</option>
+                                <option value="+60">🇲🇾 +60 (Malaysia)</option>
+                                <option value="+62">🇮🇩 +62 (Indonesia)</option>
+                                <option value="+63">🇵🇭 +63 (Philippines)</option>
+                                <option value="+66">🇹🇭 +66 (Thailand)</option>
+                                <option value="+84">🇻🇳 +84 (Vietnam)</option>
+                                <option value="+92">🇵🇰 +92 (Pakistan)</option>
+                            </select>
+                            <input type="tel" id="phone" name="phone" placeholder="10-digit number" style="flex: 1;" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Service Location *</label>
+                        <input type="text" id="location" name="location" placeholder="e.g., Delhi, Mumbai, Bangalore" required>
+                    </div>
+                </div>
+
+                <!-- Rescue Experience -->
+                <div class="section-title">🏆 Rescue Experience</div>
+                
+                <div class="form-group full">
+                    <label for="experience">Your Experience & Skills *</label>
+                    <textarea id="experience" name="experience" placeholder="Tell us about your animal rescue experience, training, or special skills..." required></textarea>
+                </div>
+
+                <div class="form-group full">
+                    <label for="qualifications">Certifications/Qualifications (if any)</label>
+                    <input type="text" id="qualifications" name="qualifications" placeholder="e.g., First Aid Certified, Wildlife Handler, Veterinary Assistant">
+                </div>
+
+                <!-- Account Security -->
+                <div class="section-title">🔐 Account Security</div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <div style="position: relative;">
+                            <input type="password" id="password" name="password" placeholder="Enter a strong password" required class="password-group">
+                            <span class="toggle-password" onclick="togglePassword('password')">
+                                <i class="fas fa-eye"></i>
+                            </span>
+                        </div>
+                        <small style="color: #6b7280; display: block; margin-top: 4px;">Min 8 chars, 1 uppercase, 1 number</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password *</label>
+                        <div style="position: relative;">
+                            <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter your password" required class="password-group">
+                            <span class="toggle-password" onclick="togglePassword('confirm_password')">
+                                <i class="fas fa-eye"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-user-plus"></i> Join as Rescuer
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Already a rescuer? <a href="{{ url_for('login') }}">Login here</a> | 
+                Want to report an animal? <a href="{{ url_for('signup') }}">Sign up as user</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = event.target.closest('.toggle-password').querySelector('i');
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Function to capitalize first letter of text
+        function capitalizeFirstLetter(str) {
+            if (!str) return str;
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Auto-capitalize first letter for these fields
+        const capitalizableFields = ['full_name', 'location', 'qualifications', 'experience'];
+        
+        capitalizableFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                // Capitalize on blur (when leaving the field)
+                field.addEventListener('blur', function() {
+                    this.value = capitalizeFirstLetter(this.value.trim());
+                });
+
+                // Also capitalize on input for real-time feedback
+                field.addEventListener('input', function() {
+                    if (this.value.length === 1) {
+                        this.value = this.value.toUpperCase();
+                    }
+                });
+            }
+        });
+
+        // Handle phone number formatting
+        document.getElementById('phone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 15) {
+                value = value.slice(0, 15);
+            }
+            e.target.value = value;
+        });
+
+        // Add country code to phone before submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const countryCode = document.getElementById('country_code').value;
+            const phoneInput = document.getElementById('phone');
+            phoneInput.value = countryCode + phoneInput.value;
+
+            // Capitalize all fields before submission
+            capitalizableFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.value = capitalizeFirstLetter(field.value.trim());
+                }
+            });
+        });
+    </script>
+</body>
+</html>
