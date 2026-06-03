@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # MongoDB connection
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://bangaru:aryabangaru123@cluster0.qxfxb6u.mongodb.net/sarrs?retryWrites=true&w=majority")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://bangaru:ZWniXEe6tfT8LvX0@cluster0.qxfxb6u.mongodb.net/sarrs?retryWrites=true&w=majority")
 
 try:
     client = MongoClient(
