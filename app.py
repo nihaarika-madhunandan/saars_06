@@ -8,23 +8,20 @@ from functools import wraps
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import json
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env BEFORE reading any config
 load_dotenv()
 
 app = Flask(__name__)
-from pymongo import MongoClient
 
-uri = "mongodb+srv://bangaru:aryabangaru123@cluster0.qxfxb6u.mongodb.net/?retryWrites=true&w=majority"
-
-client = MongoClient(uri)
-db = client["sarrs"]
-collection = db["reports"]
 # ==================== CONFIGURATION ====================
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
-app.config["SECRET_KEY"] = "your_secret_key_change_in_production"
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "your_secret_key_change_in_production")
 
 # Email Configuration
 app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
@@ -36,38 +33,11 @@ app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD", "your_password")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 # ==================== DATABASE & AUTH SETUP ====================
-#from models import db
 from models.user import User, Rescuer, Admin
 from models.report import Report
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
-@app.route("/submit", methods=["POST"])
-def submit():
-    data = {
-    "animal_type": request.form.get("animal_type"),
-    "condition": request.form.get("condition"),
-    "location": request.form.get("location")
-}
-    collection.insert_one(data)
-    return jsonify({"message": "Data saved"})
-@app.route("/data", methods=["GET"])
-def get_data():
-    data = list(collection.find())
-
-    for item in data:
-        item["_id"] = str(item["_id"])
-    return jsonify(data)
-@app.route("/update_status/<report_id>", methods=["POST"])
-def update_status(report_id):
-    from bson.objectid import ObjectId
-
-    collection.update_one(
-        {"_id": ObjectId(report_id)},
-        {"$set": {"status": "Rescued"}}
-    )
-
-    return redirect("/user/dashboard")
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 
@@ -119,7 +89,7 @@ def send_email(recipient_email, subject, body):
         server.quit()
         return True
     except Exception as e:
-        print(f"Email error: {e}")
+        logger.error(f"Email error: {e}")
         return False
 
 # ==================== AUTO-DETECT ROLE ====================
@@ -218,12 +188,6 @@ def signup():
             flash("Passwords do not match", "error")
             return redirect(url_for("signup"))
         
-        if len(password) < 8:
-            flash("Password must be at least 8 characters long", "error")
-            return redirect(url_for("signup"))
-        
-
-        
         # Check if user already exists
         if User.find_by_email(email):
             flash("Email already registered as a user", "error")
@@ -296,12 +260,6 @@ def rescuer_signup():
         if password != confirm_password:
             flash("Passwords do not match", "error")
             return redirect(url_for("rescuer_signup"))
-        
-        if len(password) < 8:
-            flash("Password must be at least 8 characters long", "error")
-            return redirect(url_for("rescuer_signup"))
-        
-
         
         # Check if user already exists
         if User.find_by_email(email):
@@ -495,9 +453,14 @@ def claim_rescue(report_id):
     
     # Verify the claim was saved
     updated_report = Report.find_by_id(report_id)
-    if not updated_report or updated_report.rescuer_id is None:
+    if not updated_report:
+        flash("Error claiming report: report not found after claim.", "error")
+        return redirect(url_for("rescuer_dashboard"))
+    if updated_report.rescuer_id is None:
+        logger.error(f"Claim failed: rescuer_id is None for report {report_id}")
         flash("Error claiming report. Please try again.", "error")
         return redirect(url_for("rescuer_dashboard"))
+    logger.info(f"Report {report_id} claimed by rescuer {rescuer_id}")
     
     # Send notification email to reporter that a rescuer has claimed their report
     email_body = f"""
@@ -659,13 +622,6 @@ def add_rescuer():
         experience = request.form.get("experience", "")
         location = request.form.get("location", "")
         password = request.form.get("password", "ResQPaws@123")
-        
-        # Enhanced password validation
-        if len(password) < 8:
-            flash("Password must be at least 8 characters", "error")
-            return redirect(url_for("add_rescuer"))
-        
-
         
         if Rescuer.find_by_email(email):
             flash("Email already exists", "error")

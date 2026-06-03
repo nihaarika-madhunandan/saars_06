@@ -31,5 +31,4 @@ except Exception as e:
         client.admin.command('ping')
         db = client.get_database()
     except Exception as e2:
-        print(f"[ERROR] MongoDB connection failed: {e2}")
         db = None

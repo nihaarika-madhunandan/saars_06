@@ -1,6 +1,9 @@
 from models import db
 from datetime import datetime
 from bson.objectid import ObjectId
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Report:
@@ -82,8 +85,8 @@ class Report:
             report_data = db.reports.find_one({"_id": ObjectId(report_id)})
             if report_data:
                 return Report._from_dict(report_data)
-        except:
-            pass
+        except Exception as e:
+            logger.error(f"find_by_id error for {report_id}: {e}")
         return None
     
     @staticmethod
@@ -116,11 +119,10 @@ class Report:
         reports = []
         # Query with multiple attempts to handle ObjectId vs String
         try:
-            # First try with string
             for report_data in db.reports.find({"rescuer_id": rescuer_id}).sort("claimed_at", -1):
                 reports.append(Report._from_dict(report_data))
-        except:
-            pass
+        except Exception as e:
+            logger.error(f"find_by_rescuer error for {rescuer_id}: {e}")
         return reports
     
     @staticmethod
