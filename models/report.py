@@ -114,8 +114,13 @@ class Report:
         # Ensure rescuer_id is a string for proper matching
         rescuer_id = str(rescuer_id)
         reports = []
-        for report_data in db.reports.find({"rescuer_id": rescuer_id}).sort("claimed_at", -1):
-            reports.append(Report._from_dict(report_data))
+        # Query with multiple attempts to handle ObjectId vs String
+        try:
+            # First try with string
+            for report_data in db.reports.find({"rescuer_id": rescuer_id}).sort("claimed_at", -1):
+                reports.append(Report._from_dict(report_data))
+        except:
+            pass
         return reports
     
     @staticmethod

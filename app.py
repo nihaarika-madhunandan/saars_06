@@ -665,13 +665,7 @@ def add_rescuer():
             flash("Password must be at least 8 characters", "error")
             return redirect(url_for("add_rescuer"))
         
-        if not any(char.isupper() for char in password):
-            flash("Password must contain at least one uppercase letter", "error")
-            return redirect(url_for("add_rescuer"))
-        
-        if not any(char.isdigit() for char in password):
-            flash("Password must contain at least one number", "error")
-            return redirect(url_for("add_rescuer"))
+
         
         if Rescuer.find_by_email(email):
             flash("Email already exists", "error")
