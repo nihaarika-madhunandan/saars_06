@@ -13,6 +13,9 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from math import radians, cos, sin, asin, sqrt
+import time
+
 # Load environment variables from .env BEFORE reading any config
 load_dotenv()
 
@@ -103,23 +106,103 @@ def role_required(role):
         return decorated_function
     return decorator
 
-def send_email(recipient_email, subject, body):
-    try:
-        msg = MIMEMultipart()
-        msg["From"] = app.config["MAIL_USERNAME"]
-        msg["To"] = recipient_email
-        msg["Subject"] = subject
-        msg.attach(MIMEText(body, "html"))
+def send_email(recipient_email, subject, body, max_retries=3):
+    """
+    Send email with retry logic and enhanced error handling
+    Returns tuple: (success: bool, message: str)
+    """
+    if not recipient_email:
+        logger.warning("send_email called with empty recipient")
+        return False, "No recipient email provided"
+    
+    if not app.config["MAIL_USERNAME"] or app.config["MAIL_USERNAME"] == "your_email@gmail.com":
+        logger.warning(f"Mail service disabled: credentials not configured")
+        return False, "Mail service not configured"
+    
+    for attempt in range(max_retries):
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["From"] = app.config["MAIL_USERNAME"]
+            msg["To"] = recipient_email
+            msg["Subject"] = subject
+            msg.attach(MIMEText(body, "html"))
+            
+            server = smtplib.SMTP(app.config["MAIL_SERVER"], int(app.config["MAIL_PORT"]), timeout=10)
+            server.starttls()
+            server.login(app.config["MAIL_USERNAME"], app.config["MAIL_PASSWORD"])
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info(f"Email sent successfully to {recipient_email}")
+            return True, "Email sent successfully"
+            
+        except smtplib.SMTPAuthenticationError as e:
+            logger.error(f"Email auth failed (attempt {attempt+1}/{max_retries}): Invalid credentials")
+            if attempt < max_retries - 1:
+                time.sleep(2)
+                continue
+            return False, "Email authentication failed - check credentials"
         
-        server = smtplib.SMTP(app.config["MAIL_SERVER"], app.config["MAIL_PORT"])
-        server.starttls()
-        server.login(app.config["MAIL_USERNAME"], app.config["MAIL_PASSWORD"])
-        server.send_message(msg)
-        server.quit()
-        return True
-    except Exception as e:
-        logger.error(f"Email error: {e}")
-        return False
+        except smtplib.SMTPException as e:
+            logger.error(f"Email SMTP error (attempt {attempt+1}/{max_retries}): {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            return False, f"Email service error: {str(e)}"
+        
+        except Exception as e:
+            logger.error(f"Email error (attempt {attempt+1}/{max_retries}): {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            return False, f"Email error: {str(e)}"
+    
+    return False, "Email failed after max retries"
+
+# ==================== LOCATION SERVICE FUNCTIONS ====================
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """Calculate distance between two coordinates (in km) using Haversine formula"""
+    if None in (lat1, lon1, lat2, lon2):
+        return None
+    try:
+        lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])
+        lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * asin(sqrt(a))
+        km = 6371 * c
+        return round(km, 1)
+    except (ValueError, TypeError):
+        return None
+
+def validate_location_coordinates(lat, lon):
+    """Validate latitude and longitude values"""
+    try:
+        lat = float(lat)
+        lon = float(lon)
+        if -90 <= lat <= 90 and -180 <= lon <= 180:
+            return lat, lon
+    except (ValueError, TypeError):
+        pass
+    return None, None
+
+def get_nearby_rescuers(latitude, longitude, radius_km=10):
+    """Get rescuers within specified radius"""
+    if not (latitude and longitude):
+        return []
+    
+    nearby = []
+    for rescuer in Rescuer.find_all():
+        if hasattr(rescuer, 'latitude') and rescuer.latitude and hasattr(rescuer, 'longitude') and rescuer.longitude:
+            dist = calculate_distance(latitude, longitude, 
+                                     rescuer.latitude, rescuer.longitude)
+            if dist is not None and dist <= radius_km:
+                nearby.append({
+                    'rescuer': rescuer,
+                    'distance': dist
+                })
+    return sorted(nearby, key=lambda x: x['distance'])
 
 # ==================== AUTO-DETECT ROLE ====================
 def auto_detect_role(email):
@@ -185,7 +268,9 @@ def login():
             <p>If this wasn't you, please change your password immediately.</p>
             <p>Best regards,<br>ResQPaws Team</p>
             """
-            send_email(email, "Login Confirmation - ResQPaws 🐾", email_body)
+            success, msg = send_email(email, "Login Confirmation - ResQPaws 🐾", email_body)
+            if not success:
+                logger.warning(f"Login email not sent to {email}: {msg}")
             
             next_page = request.args.get("next")
             if next_page:
@@ -259,7 +344,9 @@ def signup():
             <p>If you didn't create this account, please ignore this email.</p>
             <p>Best regards,<br>ResQPaws Team</p>
             """
-            send_email(email, "Welcome to ResQPaws - Account Created! 🐾", email_body)
+            success, msg = send_email(email, "Welcome to ResQPaws - Account Created! 🐾", email_body)
+            if not success:
+                logger.warning(f"Welcome email not sent to {email}: {msg}")
             
             flash("Account created successfully! Please check your email for confirmation. You can now log in.", "success")
             return redirect(url_for("login"))
@@ -340,7 +427,9 @@ def rescuer_signup():
             <p>Thank you for your commitment to helping animals in need!</p>
             <p>Best regards,<br>ResQPaws Team</p>
             """
-            send_email(email, "Welcome to ResQPaws Rescuer Portal! 🚀", email_body)
+            success, msg = send_email(email, "Welcome to ResQPaws Rescuer Portal! 🚀", email_body)
+            if not success:
+                logger.warning(f"Rescuer welcome email not sent to {email}: {msg}")
             
             flash("Rescuer account created successfully! Please check your email for confirmation. You can now log in to see rescue cases.", "success")
             return redirect(url_for("login"))
@@ -386,10 +475,8 @@ def user_report():
         try:
             lat_str = request.form.get("latitude", "").strip()
             lon_str = request.form.get("longitude", "").strip()
-            if lat_str:
-                latitude = float(lat_str)
-            if lon_str:
-                longitude = float(lon_str)
+            if lat_str and lon_str:
+                latitude, longitude = validate_location_coordinates(lat_str, lon_str)
         except (ValueError, TypeError):
             pass
 
@@ -507,7 +594,9 @@ def claim_rescue(report_id):
     <p>The rescuer will work on rescuing the animal as soon as possible. You will be notified once the animal is rescued!</p>
     <p>Best regards,<br>ResQPaws Team</p>
     """
-    send_email(report.reporter_email, "Rescuer Claimed Your Report! 🚀", email_body)
+    success, msg = send_email(report.reporter_email, "Rescuer Claimed Your Report! 🚀", email_body)
+    if not success:
+        logger.warning(f"Claim notification not sent to {report.reporter_email}: {msg}")
     
     flash("Animal claimed successfully! Reporter has been notified.", "success")
     return redirect(url_for("rescuer_dashboard") + "?tab=claimed")
@@ -549,7 +638,9 @@ def update_rescue_status(report_id):
             <p>Thank you for your immediate reporting and assistance in saving this precious life! 🐾</p>
             <p>Best regards,<br>ResQPaws Team</p>
             """
-            send_email(report.reporter_email, "Animal Rescued Successfully! 🎉", email_body)
+            success, msg = send_email(report.reporter_email, "Animal Rescued Successfully! 🎉", email_body)
+            if not success:
+                logger.warning(f"Rescue notification not sent to {report.reporter_email}: {msg}")
         
         flash("Status updated successfully!", "success")
     else:
@@ -673,7 +764,9 @@ def add_rescuer():
             <p>Start helping animals in need!</p>
             <p>Best regards,<br>ResQPaws Admin Team</p>
             """
-            send_email(email, "Welcome to ResQPaws Rescuer Portal", email_body)
+            success, msg = send_email(email, "Welcome to ResQPaws Rescuer Portal", email_body)
+            if not success:
+                logger.warning(f"Admin-welcome email not sent to {email}: {msg}")
             
             # Successfully added - show success only on admin dashboard, not in flash
             return redirect(url_for("admin_dashboard"))

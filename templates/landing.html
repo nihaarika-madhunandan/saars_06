@@ -6,192 +6,412 @@
     <title>ResQPaws - Animal Rescue System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/antd-style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-design.css') }}">
+    <style>
+        .landing-page {
+            font-family: var(--font-sans);
+            color: var(--color-text);
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .hero-content h1 {
+            font-size: 52px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 20px;
+            line-height: 1.1;
+        }
+        .hero-content p {
+            font-size: 20px;
+            color: rgba(255,255,255,0.85);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .hero-buttons .btn-modern-secondary {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.3);
+            color: white;
+        }
+        .hero-buttons .btn-modern-secondary:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.5);
+        }
+        .features-section {
+            padding: 80px 0;
+            background: var(--color-bg);
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .feature-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: 32px 24px;
+            border: 1px solid var(--color-border);
+            transition: all var(--transition-base);
+            text-align: center;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--color-primary-light);
+        }
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            margin: 0 auto 20px;
+        }
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 10px;
+        }
+        .feature-card p {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+        .steps-section {
+            padding: 80px 0;
+            background: white;
+        }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 32px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .step-card {
+            text-align: center;
+            padding: 32px 20px;
+        }
+        .step-number {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            margin: 0 auto 20px;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+        .step-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 10px;
+        }
+        .step-card p {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+        .stats-section {
+            padding: 60px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .stat-card-custom {
+            padding: 32px;
+        }
+        .stat-number {
+            font-size: 48px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 16px;
+            color: rgba(255,255,255,0.8);
+            font-weight: 500;
+        }
+        .cta-section {
+            padding: 80px 0;
+            text-align: center;
+            background: var(--color-bg);
+        }
+        .cta-section h2 {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--color-text);
+            margin-bottom: 16px;
+        }
+        .cta-section p {
+            font-size: 18px;
+            color: var(--color-text-secondary);
+            margin-bottom: 32px;
+        }
+        .footer-modern {
+            background: #1e293b;
+            padding: 48px 0 24px;
+            color: rgba(255,255,255,0.7);
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        .footer-section h4 {
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        .footer-section p, .footer-section li {
+            font-size: 14px;
+            line-height: 2;
+        }
+        .footer-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        .footer-section a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        .footer-section a:hover {
+            color: white;
+        }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 32px;
+            margin-top: 32px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .hero-content h1 { font-size: 36px; }
+            .hero-content p { font-size: 16px; }
+            .hero-section { padding: 60px 0; }
+            .features-section, .steps-section, .cta-section { padding: 48px 0; }
+            .stat-number { font-size: 36px; }
+            .cta-section h2 { font-size: 28px; }
+        }
+    </style>
 </head>
-<body>
-    <div class="landing-container">
-        <!-- Navigation -->
-        <header class="navbar-light">
-            <div class="container-xxl">
-                <div class="navbar-content">
-                    <div class="navbar-brand">
-                        <i class="fas fa-paw"></i>
-                        <span>ResQPaws</span>
-                    </div>
-                    <nav class="navbar-menu">
-                        <a href="#features" class="menu-link">Features</a>
-                        <a href="#how-it-works" class="menu-link">How It Works</a>
-                        <div class="nav-buttons">
-                            <a href="{{ url_for('login') }}" class="btn btn-outline">Login</a>
-                            <a href="{{ url_for('signup') }}" class="btn btn-primary">Sign Up</a>
-                        </div>
-                    </nav>
-                </div>
+<body class="landing-page">
+    <!-- Navigation -->
+    <nav class="nav-modern">
+        <div class="nav-modern-content">
+            <a href="{{ url_for('home') }}" class="nav-modern-brand">
+                <i class="fas fa-paw"></i>
+                <span>ResQPaws</span>
+            </a>
+            <div class="nav-modern-links">
+                <a href="#features" class="nav-modern-link">Features</a>
+                <a href="#how-it-works" class="nav-modern-link">How It Works</a>
+                <a href="{{ url_for('login') }}" class="btn-modern btn-modern-secondary btn-modern-sm" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3);color:white;">Login</a>
+                <a href="{{ url_for('signup') }}" class="btn-modern btn-modern-primary btn-modern-sm">Sign Up</a>
             </div>
-        </header>
+        </div>
+    </nav>
 
-        <!-- Hero Section -->
-        <section class="hero-section">
-            <div class="container-xxl">
-                <div class="hero-content">
-                    <h1 class="hero-title">Save Lives, One Rescue at a Time</h1>
-                    <p class="hero-subtitle">ResQPaws Connect injured animals with dedicated rescuers in real-time</p>
-                    <div class="hero-buttons">
-                        <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg">Report an Animal</a>
-                        <a href="{{ url_for('rescuer_signup') }}" class="btn btn-outline btn-lg">Join as Rescuer</a>
-                    </div>
-                </div>
-                <div class="hero-image">
-                    <div class="hero-illustration">
-                        <i class="fas fa-heart"></i>
-                    </div>
+    <!-- Hero Section -->
+    <section class="hero-section animate-fade-in">
+        <div class="container-xxl">
+            <div class="hero-content">
+                <h1>Save Lives, One Rescue at a Time</h1>
+                <p>ResQPaws connects injured animals with dedicated rescuers in real-time. Together, we make a difference.</p>
+                <div class="hero-buttons">
+                    <a href="{{ url_for('signup') }}" class="btn-modern btn-modern-primary btn-modern-lg">Report an Animal</a>
+                    <a href="{{ url_for('rescuer_signup') }}" class="btn-modern btn-modern-secondary btn-modern-lg">Join as Rescuer</a>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Features Section -->
-        <section class="features-section" id="features">
-            <div class="container-xxl">
-                <div class="section-header">
-                    <h2>Why Choose ResQPaws?</h2>
-                    <p>Everything you need to rescue animals efficiently</p>
+    <!-- Features Section -->
+    <section class="features-section" id="features">
+        <div class="container-xxl">
+            <div class="section-header-modern">
+                <h2>Why Choose ResQPaws?</h2>
+                <p>Everything you need to rescue animals efficiently</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card animate-slide-up">
+                    <div class="feature-icon"><i class="fas fa-map-location-dot"></i></div>
+                    <h3>Real-Time Location</h3>
+                    <p>GPS-enabled animal tracking for precise rescue operations</p>
                 </div>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-map-location-dot"></i>
-                        </div>
-                        <h3>Real-Time Location</h3>
-                        <p>GPS-enabled animal tracking for precise rescue operations</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-image"></i>
-                        </div>
-                        <h3>Photo Upload</h3>
-                        <p>Share detailed photos to help rescuers identify animals</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-bell"></i>
-                        </div>
-                        <h3>Instant Alerts</h3>
-                        <p>Get notified when rescuers claim your report</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <h3>Network of Rescuers</h3>
-                        <p>Connect with verified and experienced animal rescuers</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-shield"></i>
-                        </div>
-                        <h3>Secure & Private</h3>
-                        <p>Your information is encrypted and protected</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-envelope"></i>
-                        </div>
-                        <h3>Email Notifications</h3>
-                        <p>Get updates throughout the rescue process</p>
-                    </div>
+                <div class="feature-card animate-slide-up" style="animation-delay:0.1s">
+                    <div class="feature-icon"><i class="fas fa-image"></i></div>
+                    <h3>Photo Upload</h3>
+                    <p>Share detailed photos to help rescuers identify animals</p>
+                </div>
+                <div class="feature-card animate-slide-up" style="animation-delay:0.2s">
+                    <div class="feature-icon"><i class="fas fa-bell"></i></div>
+                    <h3>Instant Alerts</h3>
+                    <p>Get notified when rescuers claim your report</p>
+                </div>
+                <div class="feature-card animate-slide-up" style="animation-delay:0.3s">
+                    <div class="feature-icon"><i class="fas fa-users"></i></div>
+                    <h3>Network of Rescuers</h3>
+                    <p>Connect with verified and experienced animal rescuers</p>
+                </div>
+                <div class="feature-card animate-slide-up" style="animation-delay:0.4s">
+                    <div class="feature-icon"><i class="fas fa-shield"></i></div>
+                    <h3>Secure & Private</h3>
+                    <p>Your information is encrypted and protected</p>
+                </div>
+                <div class="feature-card animate-slide-up" style="animation-delay:0.5s">
+                    <div class="feature-icon"><i class="fas fa-envelope"></i></div>
+                    <h3>Email Notifications</h3>
+                    <p>Get updates throughout the rescue process</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- How It Works -->
-        <section class="how-it-works" id="how-it-works">
-            <div class="container-xxl">
-                <div class="section-header">
-                    <h2>How It Works</h2>
-                    <p>Simple steps to save animals</p>
+    <!-- How It Works -->
+    <section class="steps-section" id="how-it-works">
+        <div class="container-xxl">
+            <div class="section-header-modern">
+                <h2>How It Works</h2>
+                <p>Simple steps to save animals</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step-card animate-slide-up">
+                    <div class="step-number">1</div>
+                    <h3>Report</h3>
+                    <p>Find an injured animal and report it with photos and location</p>
                 </div>
-                <div class="steps-grid">
-                    <div class="step-card">
-                        <div class="step-number">1</div>
-                        <h3>Report</h3>
-                        <p>Find an injured animal and report it with photos and location</p>
-                    </div>
-                    <div class="step-card">
-                        <div class="step-number">2</div>
-                        <h3>Notify</h3>
-                        <p>Our system alerts available rescuers in your area</p>
-                    </div>
-                    <div class="step-card">
-                        <div class="step-number">3</div>
-                        <h3>Rescue</h3>
-                        <p>A rescuer claims the case and provides assistance</p>
-                    </div>
-                    <div class="step-card">
-                        <div class="step-number">4</div>
-                        <h3>Update</h3>
-                        <p>Get notified when the animal is safely rescued</p>
-                    </div>
+                <div class="step-card animate-slide-up" style="animation-delay:0.1s">
+                    <div class="step-number">2</div>
+                    <h3>Notify</h3>
+                    <p>Our system alerts available rescuers in your area</p>
+                </div>
+                <div class="step-card animate-slide-up" style="animation-delay:0.2s">
+                    <div class="step-number">3</div>
+                    <h3>Rescue</h3>
+                    <p>A rescuer claims the case and provides assistance</p>
+                </div>
+                <div class="step-card animate-slide-up" style="animation-delay:0.3s">
+                    <div class="step-number">4</div>
+                    <h3>Update</h3>
+                    <p>Get notified when the animal is safely rescued</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Stats Section -->
-        <section class="stats-section">
-            <div class="container-xxl">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number">{{ stats.total_reports if stats else 0 }}</div>
-                        <div class="stat-label">Animals Helped</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">{{ stats.total_rescuers if stats else 0 }}</div>
-                        <div class="stat-label">Active Rescuers</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">{{ stats.rescue_rate if stats else 0 }}%</div>
-                        <div class="stat-label">Success Rate</div>
-                    </div>
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container-xxl">
+            <div class="stats-grid">
+                <div class="stat-card-custom">
+                    <div class="stat-number">{{ stats.total_reports if stats else 0 }}</div>
+                    <div class="stat-label">Animals Helped</div>
+                </div>
+                <div class="stat-card-custom">
+                    <div class="stat-number">{{ stats.total_rescuers if stats else 0 }}</div>
+                    <div class="stat-label">Active Rescuers</div>
+                </div>
+                <div class="stat-card-custom">
+                    <div class="stat-number">{{ stats.rescue_rate if stats else 0 }}%</div>
+                    <div class="stat-label">Success Rate</div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- CTA Section -->
-        <section class="cta-section">
-            <div class="container-xxl">
-                <h2>Ready to Make a Difference?</h2>
-                <p>Join our community of rescuers and help save lives</p>
-                <div class="cta-buttons">
-                    <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg">Join Us</a>
-                </div>
-            </div>
-        </section>
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container-xxl">
+            <h2>Ready to Make a Difference?</h2>
+            <p>Join our community of rescuers and help save lives</p>
+            <a href="{{ url_for('signup') }}" class="btn-modern btn-modern-primary btn-modern-lg">Join Us Today</a>
+        </div>
+    </section>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="container-xxl">
-                <div class="footer-content">
-                    <div class="footer-section">
-                        <h4>ResQPaws</h4>
-                        <p>Connecting hurt animals with compassionate rescuers</p>
-                    </div>
-                    <div class="footer-section">
-                        <h4>Quick Links</h4>
-                        <ul>
-                            <li><a href="{{ url_for('home') }}">Home</a></li>
-                            <li><a href="{{ url_for('login') }}">Login</a></li>
-                            <li><a href="{{ url_for('signup') }}">Sign Up</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-section">
-                        <h4>Contact</h4>
-                        <p>Email: info@resqpaws.com</p>
-                        <p>Phone: +1 (800) PET-HELP</p>
-                    </div>
-                </div>
-                <div class="footer-bottom">
-                    <p>&copy; 2026 ResQPaws. All rights reserved. 🐾</p>
-                </div>
+    <!-- Footer -->
+    <footer class="footer-modern">
+        <div class="footer-grid">
+            <div class="footer-section">
+                <h4>ResQPaws</h4>
+                <p>Connecting hurt animals with compassionate rescuers since 2026.</p>
             </div>
-        </footer>
-    </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Home</a></li>
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('signup') }}">Sign Up</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <p>Email: info@resqpaws.com</p>
+                <p>Phone: +1 (800) PET-HELP</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 ResQPaws. All rights reserved.</p>
+        </div>
+    </footer>
 </body>
 </html>

@@ -7,6 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/antd-style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-design.css') }}">
     <style>
         * {
             margin: 0;
@@ -691,7 +692,7 @@
                                             <h2>Claim This Rescue</h2>
                                             <button class="modal-close" onclick="closeClaimForm('{{ report.id }}')">✕</button>
                                         </div>
-                                        <form method="POST" action="/rescuer/claim/{{ report.id }}">
+                                        <form method="POST" action="/rescuer/claim/{{ report.id }}" onsubmit="return submitClaimForm('{{ report.id }}')">
                                             <div class="form-group">
                                                 <label>Animal Type & Condition</label>
                                                 <input type="text" value="{{ report.animal_type }} - {{ report.condition }}" disabled>
@@ -829,11 +830,34 @@
         }
 
         function showClaimForm(reportId) {
-            document.getElementById(`claim-form-${reportId}`).style.display = 'flex';
+            const modal = document.getElementById(`claim-form-${reportId}`);
+            const form = modal.querySelector('form');
+            if (form) form.reset();
+            modal.style.display = 'flex';
         }
 
         function closeClaimForm(reportId) {
-            document.getElementById(`claim-form-${reportId}`).style.display = 'none';
+            const modal = document.getElementById(`claim-form-${reportId}`);
+            const form = modal.querySelector('form');
+            if (form) {
+                form.reset();
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Confirm & Claim';
+                }
+            }
+            modal.style.display = 'none';
+        }
+
+        function submitClaimForm(reportId) {
+            const form = document.querySelector(`#claim-form-${reportId} form`);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '⏳ Processing...';
+            }
+            return true;
         }
 
         function filterPending() {
@@ -854,11 +878,12 @@
             });
         }
 
-        // Close modal on overlay click
+        // Close modal on overlay click with proper reset
         document.querySelectorAll('.modal-overlay').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
-                    modal.style.display = 'none';
+                    const reportId = modal.id.replace('claim-form-', '');
+                    closeClaimForm(reportId);
                 }
             });
         });

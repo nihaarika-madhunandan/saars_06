@@ -7,6 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/antd-style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-design.css') }}">
     <style>
         .form-card {
             background: white;
@@ -178,7 +179,7 @@
                         <div class="form-group">
                             <label for="location">Location *</label>
                             <input type="text" id="location" name="location" placeholder="Enter address or use GPS" required>
-                            <button type="button" class="btn btn-outline" onclick="getLocation()" style="margin-top: 12px; width: 100%;">
+                            <button type="button" id="geolocation-btn" class="btn btn-outline" onclick="getLocation()" style="margin-top: 12px; width: 100%;">
                                 <i class="fas fa-map-pin"></i> Get Live Location
                             </button>
                             <div id="locationStatus" class="location-helper" style="display: none;"></div>
@@ -229,7 +230,11 @@
         }
 
         function getLocation() {
+            const btn = document.getElementById('geolocation-btn');
             if (navigator.geolocation) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Detecting...';
+                
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
                         const lat = position.coords.latitude;
@@ -238,24 +243,42 @@
                         document.getElementById('latitude').value = lat;
                         document.getElementById('longitude').value = lng;
                         
-                        // Reverse geocoding
+                        // Reverse geocoding via Nominatim
                         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                             .then(r => r.json())
                             .then(data => {
-                                document.getElementById('location').value = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                                showLocationStatus(`Location retrieved: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                                const addr = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                                document.getElementById('location').value = addr;
+                                showLocationStatus('✅ Location detected: ' + lat.toFixed(4) + ', ' + lng.toFixed(4));
+                                btn.innerHTML = '<i class="fas fa-check-circle"></i> Location Set!';
+                                btn.disabled = false;
+                                setTimeout(() => {
+                                    btn.innerHTML = '<i class="fas fa-map-pin"></i> Get Live Location';
+                                }, 3000);
                             })
                             .catch(() => {
                                 document.getElementById('location').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                                showLocationStatus(`Location retrieved: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                                showLocationStatus('✅ Location detected: ' + lat.toFixed(4) + ', ' + lng.toFixed(4));
+                                btn.innerHTML = '<i class="fas fa-check-circle"></i> Location Set!';
+                                btn.disabled = false;
+                                setTimeout(() => {
+                                    btn.innerHTML = '<i class="fas fa-map-pin"></i> Get Live Location';
+                                }, 3000);
                             });
                     },
                     function(error) {
-                        showLocationStatus('Could not retrieve location. Please enter manually.', true);
-                    }
+                        let msg = 'Could not retrieve location. ';
+                        if (error.code === 1) msg += 'Please allow location access.';
+                        else if (error.code === 2) msg += 'Location unavailable.';
+                        else msg += 'Request timed out.';
+                        showLocationStatus(msg, true);
+                        btn.innerHTML = '<i class="fas fa-map-pin"></i> Get Live Location';
+                        btn.disabled = false;
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             } else {
-                showLocationStatus('Geolocation not supported. Please enter manually.', true);
+                showLocationStatus('Geolocation not supported in your browser. Please enter manually.', true);
             }
         }
 
@@ -266,6 +289,16 @@
             status.style.background = error ? '#fee2e2' : '#f0f9ff';
             status.style.borderColor = error ? '#fca5a5' : '#bae6fd';
             status.style.color = error ? '#991b1b' : '#0c63d4';
+            if (!error) {
+                setTimeout(() => {
+                    status.style.transition = 'opacity 0.5s';
+                    status.style.opacity = '0';
+                    setTimeout(() => {
+                        status.style.display = 'none';
+                        status.style.opacity = '1';
+                    }, 500);
+                }, 4000);
+            }
         }
 
         function validateForm() {
