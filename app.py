@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 app = Flask(__name__)
-
+from models import db, client
 # ==================== CONFIGURATION ====================
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
@@ -35,6 +35,35 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 # ==================== DATABASE & AUTH SETUP ====================
 from models.user import User, Rescuer, Admin
 from models.report import Report
+
+# Auto-seed in-memory database if empty
+if db is not None:
+    try:
+        import sys
+        if sys.platform == 'win32':
+            import io
+            try:
+                if hasattr(sys.stdout, 'encoding') and sys.stdout.encoding.lower() != 'utf-8':
+                    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+                if hasattr(sys.stderr, 'encoding') and sys.stderr.encoding.lower() != 'utf-8':
+                    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+            except Exception:
+                pass
+
+        is_mock = False
+        try:
+            import mongomock
+            if isinstance(client, mongomock.MongoClient):
+                is_mock = True
+        except ImportError:
+            pass
+        
+        if is_mock and db.users.count_documents({}) == 0:
+            print("[INFO] In-memory database is empty. Auto-seeding demo data...")
+            from init_demo_data import create_demo_data
+            create_demo_data()
+    except Exception as seed_err:
+        print(f"[WARNING] Failed to auto-seed in-memory database: {seed_err}")
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"

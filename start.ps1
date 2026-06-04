@@ -15,8 +15,11 @@ Write-Host ""
 
 # Get script directory
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$venvPath = Join-Path $scriptDir "venv"
-$activateScript = Join-Path $venvPath "Scripts" "Activate.ps1"
+$venvPath = Join-Path $scriptDir ".venv"
+if (-not (Test-Path $venvPath)) {
+    $venvPath = Join-Path $scriptDir "venv"
+}
+$activateScript = "$venvPath\Scripts\Activate.ps1"
 
 # Step 1: Activate virtual environment
 if (Test-Path $activateScript) {
@@ -32,8 +35,8 @@ if (Test-Path $activateScript) {
 # Step 2: Upgrade pip and install requirements
 if ($Install) {
     Write-Host "[2/4] 📚 Installing/upgrading packages..." -ForegroundColor Yellow
-    pip install --upgrade pip
-    pip install --upgrade -r requirements.txt
+    & "$venvPath\Scripts\python.exe" -m pip install --upgrade pip
+    & "$venvPath\Scripts\python.exe" -m pip install -r requirements.txt
     Write-Host "      ✅ Packages installed" -ForegroundColor Green
 } else {
     Write-Host "[2/4] ⏭️  Skipping package installation (use -Install flag to upgrade)" -ForegroundColor Yellow
@@ -42,7 +45,7 @@ if ($Install) {
 # Step 3: Clean database if requested
 if ($CleanDB) {
     Write-Host "[3/4] 🗑️  Cleaning database..." -ForegroundColor Yellow
-    $dbPath = Join-Path $scriptDir "instance" "resqpaws.db"
+    $dbPath = "$scriptDir\instance\resqpaws.db"
     if (Test-Path $dbPath) {
         Remove-Item $dbPath
         Write-Host "      ✅ Database removed" -ForegroundColor Green
@@ -61,7 +64,7 @@ Write-Host "  🛑 Press Ctrl+C to stop" -ForegroundColor Yellow
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host ""
 
-python app.py
+& "$venvPath\Scripts\python.exe" app.py
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Application failed to start" -ForegroundColor Red
